@@ -47,6 +47,10 @@
 	dr_mode = "host";
 };
 
+&spi_1 {
+	status = "okay";
+};
+
 &mali {
 	status = "okay";
 	mali-freq = <600000000>;
