@@ -107,6 +107,29 @@ struct string_array_spec {
 	const char * const *data;
 };
 
+//-----------------------------------------------------------------------------
+//  DVI Control (defaults to hdmi always).
+//
+//-----------------------------------------------------------------------------
+
+unsigned int gdvi_mode = false;
+
+static int __init dvi_force_enable(char *l)
+{
+	if(!strcmp(l, "dvi")) {
+		gdvi_mode = true;
+		pr_emerg("hdmi: using DVI Mode\n");
+	} else {
+		gdvi_mode = false;
+		pr_emerg("hdmi: using HDMI Mode\n");
+	}
+
+	return 0;
+}
+__setup("vout=", dvi_force_enable);
+
+//-----------------------------------------------------------------------------
+
 #define INIT_ARRAY_SPEC(a) { .count = ARRAY_SIZE(a), .data = a }
 
 struct hdmi_driver_data {
@@ -915,6 +938,8 @@ static int hdmi_get_modes(struct drm_connector *connector)
 		return -ENODEV;
 
 	hdata->dvi_mode = !drm_detect_hdmi_monitor(edid);
+	hdata->dvi_mode = gdvi_mode;
+
 	DRM_DEBUG_KMS("%s : width[%d] x height[%d]\n",
 		(hdata->dvi_mode ? "dvi monitor" : "hdmi monitor"),
 		edid->width_cm, edid->height_cm);
