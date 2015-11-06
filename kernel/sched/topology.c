@@ -1327,6 +1327,9 @@ sd_init(struct sched_domain_topology_level *tl,
 					| 1*SD_PREFER_SIBLING
 					| 0*SD_NUMA
 					| sd_flags
+#ifdef CONFIG_HPERF_HMP
+					| (tl->flags & SD_HMP_BALANCE)
+#endif
 					,
 
 		.last_balance		= jiffies,
@@ -1413,7 +1416,11 @@ static struct sched_domain_topology_level default_topology[] = {
 #ifdef CONFIG_SCHED_MC
 	{ cpu_coregroup_mask, cpu_core_flags, SD_INIT_NAME(MC) },
 #endif
-	{ cpu_cpu_mask, SD_INIT_NAME(DIE) },
+	{ cpu_cpu_mask,
+#ifdef CONFIG_HPERF_HMP
+	 .flags = SD_HMP_BALANCE,
+#endif
+	 SD_INIT_NAME(DIE)},
 	{ NULL, },
 };
 
