@@ -1,0 +1,1 @@
+obj-y += exynos5422.o
