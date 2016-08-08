@@ -1289,6 +1289,37 @@
 		};
 	};
 
+        mali: mali@11800000 {
+                compatible = "arm,malit628", "arm,malit62x", "arm,malit6xx", "arm,mali-midgard";
+                reg = <0x11800000 0x5000>;
+                interrupts = <0 219 0>, <0 74 0>, <0 117 0>;
+                interrupt-names = "JOB", "MMU", "GPU";
+
+                clocks = <&clock CLK_G3D>;
+                clock-names = "clk_mali";
+
+                assigned-clocks = <&clock CLK_FOUT_VPLL>;
+                assigned-clock-rates = <480000000>;
+
+                operating-points = <
+                        /* KHz   uV */
+/*
+                        600000 1150000
+                        543000 1037500
+*/
+                        480000 1000000
+/*
+                        420000  962500
+                        350000  912500
+                        266000  862500
+                        177000  812500
+*/
+                >;
+
+                status = "disabled";
+        };
+
+
 	thermal-zones {
 		cpu0_thermal: cpu0-thermal {
 			thermal-sensors = <&tmu_cpu0>;

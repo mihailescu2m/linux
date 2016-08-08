@@ -642,3 +642,9 @@
 	vdd33-supply = <&ldo9_reg>;
 	vdd10-supply = <&ldo11_reg>;
 };
+
+&mali {
+        mali-supply = <&buck4_reg>;
+        status = "okay";
+};
+
