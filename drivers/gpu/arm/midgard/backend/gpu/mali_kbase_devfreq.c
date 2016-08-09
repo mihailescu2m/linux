@@ -52,6 +52,8 @@ kbase_devfreq_target(struct device *dev, unsigned long *target_freq, u32 flags)
 	unsigned long freq = 0;
 	unsigned long voltage;
 	int err;
+        struct clk *fout_vpll;
+        struct clk *dout_aclk_g3d;
 
 	freq = *target_freq;
 
@@ -62,14 +64,6 @@ kbase_devfreq_target(struct device *dev, unsigned long *target_freq, u32 flags)
 	if (IS_ERR_OR_NULL(opp)) {
 		dev_err(dev, "Failed to get opp (%ld)\n", PTR_ERR(opp));
 		return PTR_ERR(opp);
-	}
-
-	/*
-	 * Only update if there is a change of frequency
-	 */
-	if (kbdev->current_freq == freq) {
-		*target_freq = freq;
-		return 0;
 	}
 
 #ifdef CONFIG_REGULATOR
@@ -83,12 +77,47 @@ kbase_devfreq_target(struct device *dev, unsigned long *target_freq, u32 flags)
 	}
 #endif
 
+        /*
+         * Only update if there is a change of frequency
+         */
+        if (kbdev->current_freq == freq) {
+                *target_freq = freq;
+                return 0;
+        }
+
+        fout_vpll = clk_get(NULL, "fout_vpll");
+        if (IS_ERR_OR_NULL(fout_vpll)) {
+                dev_err(dev, "Failed to get clock [fout_vpll]\n");
+                return PTR_ERR(fout_vpll);
+        }
+        dout_aclk_g3d = clk_get(kbdev->dev, "dout_aclk_g3d");
+        if (IS_ERR_OR_NULL(dout_aclk_g3d)) {
+                dev_err(dev, "Failed to get clock [dout_aclk_g3d]\n");
+                return PTR_ERR(dout_aclk_g3d);
+        }
+
+        if (freq != clk_get_rate(fout_vpll)) {
+                err = clk_set_rate(fout_vpll, freq);
+                if (err < 0) {
+                        dev_err(dev, "Failed to set clock [fout_vpll] to %lu (%d)\n", freq, err);
+                        return err;
+                }
+        }
+
+        err = clk_set_rate(dout_aclk_g3d, freq);
+        if (err < 0) {
+                dev_err(dev, "Failed to set clock [dout_aclk_g3d] to %lu (%d)\n", freq, err);
+                return err;
+        }
+
+/*
 	err = clk_set_rate(kbdev->clock, freq);
 	if (err) {
 		dev_err(dev, "Failed to set clock %lu (target %lu)\n",
 				freq, *target_freq);
 		return err;
 	}
+*/
 
 #ifdef CONFIG_REGULATOR
 	if (kbdev->regulator && kbdev->current_voltage != voltage
