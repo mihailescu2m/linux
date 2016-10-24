@@ -29,7 +29,7 @@
 			compatible = "arm,cortex-a7";
 			reg = <0x100>;
 			clocks = <&clock CLK_KFC_CLK>;
-			clock-frequency = <1000000000>;
+			clock-frequency = <1300000000>;
 			cci-control-port = <&cci_control0>;
 			operating-points-v2 = <&cluster_a7_opp_table>;
 			cooling-min-level = <0>;
@@ -41,7 +41,7 @@
 			device_type = "cpu";
 			compatible = "arm,cortex-a7";
 			reg = <0x101>;
-			clock-frequency = <1000000000>;
+			clock-frequency = <1300000000>;
 			cci-control-port = <&cci_control0>;
 			operating-points-v2 = <&cluster_a7_opp_table>;
 			cooling-min-level = <0>;
@@ -53,7 +53,7 @@
 			device_type = "cpu";
 			compatible = "arm,cortex-a7";
 			reg = <0x102>;
-			clock-frequency = <1000000000>;
+			clock-frequency = <1300000000>;
 			cci-control-port = <&cci_control0>;
 			operating-points-v2 = <&cluster_a7_opp_table>;
 			cooling-min-level = <0>;
@@ -65,7 +65,7 @@
 			device_type = "cpu";
 			compatible = "arm,cortex-a7";
 			reg = <0x103>;
-			clock-frequency = <1000000000>;
+			clock-frequency = <1300000000>;
 			cci-control-port = <&cci_control0>;
 			operating-points-v2 = <&cluster_a7_opp_table>;
 			cooling-min-level = <0>;
@@ -78,7 +78,7 @@
 			compatible = "arm,cortex-a15";
 			clocks = <&clock CLK_ARM_CLK>;
 			reg = <0x0>;
-			clock-frequency = <1800000000>;
+			clock-frequency = <2000000000>;
 			cci-control-port = <&cci_control1>;
 			operating-points-v2 = <&cluster_a15_opp_table>;
 			cooling-min-level = <0>;
@@ -90,7 +90,7 @@
 			device_type = "cpu";
 			compatible = "arm,cortex-a15";
 			reg = <0x1>;
-			clock-frequency = <1800000000>;
+			clock-frequency = <2000000000>;
 			cci-control-port = <&cci_control1>;
 			operating-points-v2 = <&cluster_a15_opp_table>;
 			cooling-min-level = <0>;
@@ -102,7 +102,7 @@
 			device_type = "cpu";
 			compatible = "arm,cortex-a15";
 			reg = <0x2>;
-			clock-frequency = <1800000000>;
+			clock-frequency = <2000000000>;
 			cci-control-port = <&cci_control1>;
 			operating-points-v2 = <&cluster_a15_opp_table>;
 			cooling-min-level = <0>;
@@ -114,7 +114,7 @@
 			device_type = "cpu";
 			compatible = "arm,cortex-a15";
 			reg = <0x3>;
-			clock-frequency = <1800000000>;
+			clock-frequency = <2000000000>;
 			cci-control-port = <&cci_control1>;
 			operating-points-v2 = <&cluster_a15_opp_table>;
 			cooling-min-level = <0>;
