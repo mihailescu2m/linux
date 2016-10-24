@@ -695,20 +695,42 @@ static inline void hdmi_reg_writemask(struct hdmi_context *hdata,
 static int hdmiphy_reg_write_buf(struct hdmi_context *hdata,
 			u32 reg_offset, const u8 *buf, u32 len)
 {
+	u8 buffer[32];
+	
+	memset(buffer, 0x00, sizeof(buffer));
+	memcpy(buffer, buf, len);
+	
+	buffer[16] &= (~0x0F);
+	buffer[15] &= (~0x80);
+	buffer[16] |= (31 >> 1) & 0x0F;
+	buffer[15] |= (31 & 0x01) ? 0x80 : 0x00;
+	buffer[4] &= (~0xC0);
+	buffer[4] |= (3 << 6) & 0xC0;
+	buffer[19] &= (~0x03);
+	buffer[19] |= (3 & 0x03);
+	buffer[23] &= (~0x03);
+	buffer[23] |= (3 & 0x03);
+	buffer[16] &= (~0xF0);
+	buffer[16] |= (6 << 4) & 0xF0;
+	buffer[23] &= (~0xF8);
+	buffer[23] |= (31 << 3) & 0xF8;
+	buffer[15] &= (~0x30);
+	buffer[15] |= (0 << 4) & 0x30;	
+	
 	if ((reg_offset + len) > 32)
 		return -EINVAL;
 
 	if (hdata->hdmiphy_port) {
 		int ret;
 
-		ret = i2c_master_send(hdata->hdmiphy_port, buf, len);
+		ret = i2c_master_send(hdata->hdmiphy_port, buffer, len);
 		if (ret == len)
 			return 0;
 		return ret;
 	} else {
 		int i;
 		for (i = 0; i < len; i++)
-			writel(buf[i], hdata->regs_hdmiphy +
+			writel(buffer[i], hdata->regs_hdmiphy +
 				((reg_offset + i)<<2));
 		return 0;
 	}
