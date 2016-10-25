@@ -82,7 +82,7 @@
 			cci-control-port = <&cci_control1>;
 			operating-points-v2 = <&cluster_a15_opp_table>;
 			cooling-min-level = <0>;
-			cooling-max-level = <15>;
+			cooling-max-level = <18>;
 			#cooling-cells = <2>; /* min followed by max */
 		};
 
@@ -94,7 +94,7 @@
 			cci-control-port = <&cci_control1>;
 			operating-points-v2 = <&cluster_a15_opp_table>;
 			cooling-min-level = <0>;
-			cooling-max-level = <15>;
+			cooling-max-level = <18>;
 			#cooling-cells = <2>; /* min followed by max */
 		};
 
@@ -106,7 +106,7 @@
 			cci-control-port = <&cci_control1>;
 			operating-points-v2 = <&cluster_a15_opp_table>;
 			cooling-min-level = <0>;
-			cooling-max-level = <15>;
+			cooling-max-level = <18>;
 			#cooling-cells = <2>; /* min followed by max */
 		};
 
@@ -118,7 +118,7 @@
 			cci-control-port = <&cci_control1>;
 			operating-points-v2 = <&cluster_a15_opp_table>;
 			cooling-min-level = <0>;
-			cooling-max-level = <15>;
+			cooling-max-level = <18>;
 			#cooling-cells = <2>; /* min followed by max */
 		};
 	};
