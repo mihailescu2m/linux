@@ -136,11 +136,11 @@
 				 */
 				map5 {
 					trip = <&cpu_alert4>;
-					cooling-device = <&cpu0 3 7>;
+					cooling-device = <&cpu0 3 8>;
 				};
 				map6 {
 					trip = <&cpu_alert4>;
-					cooling-device = <&cpu4 3 11>;
+					cooling-device = <&cpu4 3 13>;
 				};
 			};
 		};
