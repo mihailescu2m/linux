@@ -579,21 +579,6 @@ static int dwc3_phy_setup(struct dwc3 *dwc)
 	return 0;
 }
 
-static void dwc3_core_exit(struct dwc3 *dwc)
-{
-	dwc3_event_buffers_cleanup(dwc);
-
-	usb_phy_shutdown(dwc->usb2_phy);
-	usb_phy_shutdown(dwc->usb3_phy);
-	phy_exit(dwc->usb2_generic_phy);
-	phy_exit(dwc->usb3_generic_phy);
-
-	usb_phy_set_suspend(dwc->usb2_phy, 1);
-	usb_phy_set_suspend(dwc->usb3_phy, 1);
-	phy_power_off(dwc->usb2_generic_phy);
-	phy_power_off(dwc->usb3_generic_phy);
-}
-
 /**
  * dwc3_core_init - Low-level initialization of DWC3 Core
  * @dwc: Pointer to our controller context structure
@@ -640,10 +625,6 @@ static int dwc3_core_init(struct dwc3 *dwc)
 		goto err0;
 
 	ret = dwc3_core_soft_reset(dwc);
-	if (ret)
-		goto err0;
-
-	ret = dwc3_phy_setup(dwc);
 	if (ret)
 		goto err0;
 
@@ -719,26 +700,7 @@ static int dwc3_core_init(struct dwc3 *dwc)
 
 	ret = dwc3_setup_scratch_buffers(dwc);
 	if (ret)
-		goto err1;
-
-	/* Adjust Frame Length */
-	dwc3_frame_length_adjustment(dwc);
-
-	usb_phy_set_suspend(dwc->usb2_phy, 0);
-	usb_phy_set_suspend(dwc->usb3_phy, 0);
-	ret = phy_power_on(dwc->usb2_generic_phy);
-	if (ret < 0)
 		goto err2;
-
-	ret = phy_power_on(dwc->usb3_generic_phy);
-	if (ret < 0)
-		goto err3;
-
-	ret = dwc3_event_buffers_setup(dwc);
-	if (ret) {
-		dev_err(dwc->dev, "failed to setup event buffers\n");
-		goto err4;
-	}
 
 	switch (dwc->dr_mode) {
 	case USB_DR_MODE_PERIPHERAL:
@@ -768,15 +730,8 @@ static int dwc3_core_init(struct dwc3 *dwc)
 
 	return 0;
 
-err4:
-	phy_power_off(dwc->usb3_generic_phy);
-
-err3:
-	phy_power_off(dwc->usb2_generic_phy);
-
 err2:
-	usb_phy_set_suspend(dwc->usb2_phy, 1);
-	usb_phy_set_suspend(dwc->usb3_phy, 1);
+	dwc3_free_scratch_buffers(dwc);
 
 err1:
 	usb_phy_shutdown(dwc->usb2_phy);
@@ -786,6 +741,15 @@ err1:
 
 err0:
 	return ret;
+}
+
+static void dwc3_core_exit(struct dwc3 *dwc)
+{
+	dwc3_free_scratch_buffers(dwc);
+	usb_phy_shutdown(dwc->usb2_phy);
+	usb_phy_shutdown(dwc->usb3_phy);
+	phy_exit(dwc->usb2_generic_phy);
+	phy_exit(dwc->usb3_generic_phy);
 }
 
 static int dwc3_core_get_phy(struct dwc3 *dwc)
@@ -1044,6 +1008,11 @@ static int dwc3_probe(struct platform_device *pdev)
 	platform_set_drvdata(pdev, dwc);
 	dwc3_cache_hwparams(dwc);
 
+	ret = dwc3_phy_setup(dwc);
+	if (ret)
+		goto err0;
+
+
 	ret = dwc3_core_get_phy(dwc);
 	if (ret)
 		goto err0;
@@ -1074,10 +1043,6 @@ static int dwc3_probe(struct platform_device *pdev)
 	}
 
 	ret = dwc3_get_dr_mode(dwc);
-	if (ret)
-		goto err3;
-
-	ret = dwc3_alloc_scratch_buffers(dwc);
 	if (ret)
 		goto err3;
 
@@ -1114,20 +1079,49 @@ static int dwc3_probe(struct platform_device *pdev)
 		break;
 	}
 
+	dwc3_frame_length_adjustment(dwc);
+
+	usb_phy_set_suspend(dwc->usb2_phy, 0);
+	usb_phy_set_suspend(dwc->usb3_phy, 0);
+	ret = phy_power_on(dwc->usb2_generic_phy);
+	if (ret < 0)
+		goto err5;
+
+	ret = phy_power_on(dwc->usb3_generic_phy);
+	if (ret < 0)
+		goto err6;
+
+	ret = dwc3_event_buffers_setup(dwc);
+	if (ret) {
+		dev_err(dwc->dev, "failed to sestup event buffers\n");
+		goto err7;
+	}
+
+
 	ret = dwc3_core_init_mode(dwc);
 	if (ret)
-		goto err5;
+		goto err8;
 
 	dwc3_debugfs_init(dwc);
 	pm_runtime_put(dev);
 
 	return 0;
 
-err5:
+err8:
 	dwc3_event_buffers_cleanup(dwc);
 
+err7:
+	phy_power_off(dwc->usb3_generic_phy);
+
+err6:
+	phy_power_off(dwc->usb2_generic_phy);
+
+err5:
+	usb_phy_set_suspend(dwc->usb2_phy, 1);
+	usb_phy_set_suspend(dwc->usb3_phy, 1);
+	dwc3_core_exit(dwc);
+
 err4:
-	dwc3_free_scratch_buffers(dwc);
 
 err3:
 	dwc3_free_event_buffers(dwc);
@@ -1166,6 +1160,14 @@ static int dwc3_remove(struct platform_device *pdev)
 
 	dwc3_debugfs_exit(dwc);
 	dwc3_core_exit_mode(dwc);
+	dwc3_event_buffers_cleanup(dwc);
+	dwc3_free_event_buffers(dwc);
+
+	usb_phy_set_suspend(dwc->usb2_phy, 1);
+	usb_phy_set_suspend(dwc->usb3_phy, 1);
+
+	phy_power_off(dwc->usb2_generic_phy);
+	phy_power_off(dwc->usb3_generic_phy);
 
 	dwc3_core_exit(dwc);
 	dwc3_ulpi_exit(dwc);
@@ -1173,9 +1175,6 @@ static int dwc3_remove(struct platform_device *pdev)
 	pm_runtime_put_sync(&pdev->dev);
 	pm_runtime_allow(&pdev->dev);
 	pm_runtime_disable(&pdev->dev);
-
-	dwc3_free_event_buffers(dwc);
-	dwc3_free_scratch_buffers(dwc);
 
 	return 0;
 }
