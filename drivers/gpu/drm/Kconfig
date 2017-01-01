@@ -265,6 +265,8 @@ source "drivers/gpu/drm/meson/Kconfig"
 
 source "drivers/gpu/drm/tinydrm/Kconfig"
 
+source "drivers/gpu/arm/Kconfig"
+
 # Keep legacy drivers last
 
 menuconfig DRM_LEGACY

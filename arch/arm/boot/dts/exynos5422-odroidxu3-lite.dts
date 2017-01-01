@@ -36,3 +36,9 @@
 &usbdrd_dwc3_1 {
 	dr_mode = "peripheral";
 };
+
+&mali {
+	mali-freq = <533000000>;
+	mali-volts = <1150000>;
+	status = "okay";
+};
