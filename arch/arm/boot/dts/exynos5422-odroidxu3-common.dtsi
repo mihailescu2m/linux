@@ -57,7 +57,22 @@
 		#cooling-cells = <2>;
 		cooling-levels = <0 130 170 230>;
 	};
-
+	
+	mali: mali@0x11800000 {
+		compatible = "arm,malit628", "arm,malit62x", "arm,malit6xx", "arm,mali-midgard";
+		reg = <0x11800000 0x5000>;
+		
+		interrupts = <0 219 0>, <0 74 0>, <0 117 0>;
+		interrupt-names = "JOB", "MMU", "GPU";
+		
+		clocks = <&clock CLK_FOUT_VPLL>, <&clock CLK_DOUT_ACLK_G3D>, <&clock CLK_G3D>;
+		clock-names = "fout_vpll", "dout_aclk_g3d", "clk_mali";
+		
+		gpu-supply = <&buck4_reg>;
+		
+		status = "disabled";
+	};
+		
 	thermal-zones {
 		cpu0_thermal: cpu0-thermal {
 			thermal-sensors = <&tmu_cpu0 0>;

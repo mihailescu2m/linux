@@ -1,0 +1,1 @@
+obj-y += odroid5422.o

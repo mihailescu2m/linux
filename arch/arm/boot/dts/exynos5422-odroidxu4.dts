@@ -46,3 +46,9 @@
 &usbdrd_dwc3_1 {
 	dr_mode = "host";
 };
+
+&mali {
+	status = "okay";
+	mali-freq = <600000000>;
+	mali-volts = <1150000>;
+};
