@@ -24,6 +24,21 @@ static int odroid5422_platform_init(struct kbase_device *kbdev)
 	u32 target_freq;
 	u32 target_volts;
 	int ret = 0;
+
+	ret = of_property_read_u32(n, "mali-freq", &target_freq);
+	if(0 < ret) {
+		dev_err(dev, "failed to get mali-freq dt bind");
+		return ret;
+	}
+	
+	ret = of_property_read_u32(n, "mali-volts", &target_volts);
+	if(0 < ret) {
+		dev_err(dev, "failed to get mali-volts dt bind");
+		return ret;
+	}
+	
+	if(kbdev->current_freq == target_freq)
+		return 0;
 	
 	reg = regulator_get_optional(dev, "gpu");
 	if(IS_ERR_OR_NULL(reg)) {
@@ -42,21 +57,6 @@ static int odroid5422_platform_init(struct kbase_device *kbdev)
 		dev_err(dev, "Failed to get dout_aclk");
 		return PTR_ERR(dout_aclk_g3d);
 	}
-	
-	ret = of_property_read_u32(n, "mali-freq", &target_freq);
-	if(0 < ret) {
-		dev_err(dev, "failed to get mali-freq dt bind");
-		return ret;
-	}
-	
-	ret = of_property_read_u32(n, "mali-volts", &target_volts);
-	if(0 < ret) {
-		dev_err(dev, "failed to get mali-volts dt bind");
-		return ret;
-	}
-	
-	if(kbdev->current_freq == target_freq)
-		return 0;
 	
 	ret = regulator_set_voltage(reg, target_volts, target_volts);
 	if(ret < 0) {
