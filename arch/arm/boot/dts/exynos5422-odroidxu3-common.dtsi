@@ -21,6 +21,8 @@
 #include "exynos-mfc-reserved-memory.dtsi"
 
 / {
+	revision = <0x0100>;
+
 	memory@40000000 {
 		device_type = "memory";
 		reg = <0x40000000 0x7EA00000>;

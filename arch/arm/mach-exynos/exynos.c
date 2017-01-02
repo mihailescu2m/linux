@@ -22,6 +22,7 @@
 #include <asm/hardware/cache-l2x0.h>
 #include <asm/mach/arch.h>
 #include <asm/mach/map.h>
+#include <asm/system_info.h>
 
 #include <mach/map.h>
 #include <plat/cpu.h>
@@ -48,6 +49,11 @@ static struct platform_device exynos_cpuidle = {
 void __iomem *sysram_base_addr __ro_after_init;
 void __iomem *sysram_ns_base_addr __ro_after_init;
 
+static void __init exynos_get_revision(void)
+{
+	of_property_read_u32(of_root, "revision", &system_rev);
+}
+
 void __init exynos_sysram_init(void)
 {
 	struct device_node *node;
@@ -65,6 +71,8 @@ void __init exynos_sysram_init(void)
 		sysram_ns_base_addr = of_iomap(node, 0);
 		break;
 	}
+
+	exynos_get_revision();
 }
 
 static void __init exynos_init_late(void)
