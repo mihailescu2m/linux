@@ -1076,12 +1076,7 @@ static int mixer_atomic_check(struct exynos_drm_crtc *crtc,
 		mode->hdisplay, mode->vdisplay, mode->vrefresh,
 		(mode->flags & DRM_MODE_FLAG_INTERLACE) ? 1 : 0);
 
-	if ((w >= 464 && w <= 720 && h >= 261 && h <= 576) ||
-		(w >= 1024 && w <= 1280 && h >= 576 && h <= 720) ||
-		(w >= 1664 && w <= 1920 && h >= 936 && h <= 1080))
-		return 0;
-
-	return -EINVAL;
+	return 0;
 }
 
 static const struct exynos_drm_crtc_ops mixer_crtc_ops = {
