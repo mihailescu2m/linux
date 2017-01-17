@@ -218,6 +218,10 @@
 #define CLK_MOUT_BPLL		655
 #define CLK_MOUT_MX_MSPLL_CCORE	656
 
+#define	CLK_MOUT_DPLL		700
+#define	CLK_MOUT_SPI1		701
+#define	CLK_DOUT_SPI1		702
+
 /* divider clocks */
 #define CLK_DOUT_PIXEL		768
 #define CLK_DOUT_ACLK400_WCORE	769
