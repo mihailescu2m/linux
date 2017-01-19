@@ -202,4 +202,6 @@ source "drivers/hwtracing/intel_th/Kconfig"
 
 source "drivers/fpga/Kconfig"
 
+# Hardkernel Specific drivers
+source "drivers/hardkernel/Kconfig"
 endmenu
