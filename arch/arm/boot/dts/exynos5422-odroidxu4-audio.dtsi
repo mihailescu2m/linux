@@ -12,6 +12,10 @@
 */
 
 / {
+	dummy_codec: spdif-transmitter {
+		compatible = "linux,spdif-dit";
+		status = "okay";
+	};
 	sound: sound {
 		compatible = "hardkernel,odroid-max98090";
 		card-name = "odroid-snd";
@@ -30,19 +34,8 @@
 			"dout_srp","dout_aud_bus",
 			"mau_epll_clk";
 		samsung,i2s-controller = <&i2s0 0>;
-		samsung,audio-codec = <&max98090>;
-		codec-dai-name = "HiFi";
-	};
-};
-
-&hsi2c_5 {
-	status = "okay";
-	max98090: max98090@10 {
-		compatible = "maxim,max98090";
-		reg = <0x10>;
-		interrupt-parent = <&gpx3>;
-		interrupts = <2 0>;
-		#sound-dai-cells = <0>;
+		samsung,audio-codec = <&dummy_codec>;
+		codec-dai-name = "dit-hifi";
 	};
 };
 

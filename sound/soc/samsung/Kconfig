@@ -229,4 +229,13 @@ config SND_SOC_ARNDALE_RT5631_ALC5631
         select SND_SAMSUNG_I2S
         select SND_SOC_RT5631
 
+config SND_SOC_ODROID_MAX98090
+	tristate "SoC I2S Audio support for Maxim MAX98090."
+	depends on I2C
+	select SND_SAMSUNG_I2S
+	select SND_SOC_MAX98090
+	select SND_SOC_SPDIF
+	help
+	  Say Y if you want to add support for SoC audio for Maxim MAX98090
+
 endif #SND_SOC_SAMSUNG
