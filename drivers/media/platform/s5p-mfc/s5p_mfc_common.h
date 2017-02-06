@@ -652,6 +652,8 @@ struct s5p_mfc_ctx {
 	size_t me_buffer_size;
 	size_t tmv_buffer_size;
 
+	enum v4l2_field field;
+
 	enum v4l2_mpeg_mfc51_video_force_frame_type force_frame_type;
 
 	struct list_head ref_queue;
