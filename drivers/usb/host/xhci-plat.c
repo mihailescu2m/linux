@@ -209,21 +209,7 @@ static int xhci_plat_probe(struct platform_device *pdev)
 		if (priv_match)
 			*priv = *priv_match;
 	}
-
-	device_wakeup_enable(hcd->self.controller);
-
-	xhci->clk = clk;
-	xhci->main_hcd = hcd;
-	xhci->shared_hcd = usb_create_shared_hcd(driver, &pdev->dev,
-			dev_name(&pdev->dev), hcd);
-	if (!xhci->shared_hcd) {
-		ret = -ENOMEM;
-		goto disable_clk;
-	}
-
-	if (device_property_read_bool(&pdev->dev, "usb3-lpm-capable"))
-		xhci->quirks |= XHCI_LPM_SUPPORT;
-
+	
 	hcd->usb_phy = devm_usb_get_phy_by_phandle(&pdev->dev, "usb-phy", 0);
 	if (IS_ERR(hcd->usb_phy)) {
 		ret = PTR_ERR(hcd->usb_phy);
@@ -239,6 +225,20 @@ static int xhci_plat_probe(struct platform_device *pdev)
 	ret = usb_add_hcd(hcd, irq, IRQF_SHARED);
 	if (ret)
 		goto disable_usb_phy;
+
+	device_wakeup_enable(hcd->self.controller);
+
+	xhci->clk = clk;
+	xhci->main_hcd = hcd;
+	xhci->shared_hcd = usb_create_shared_hcd(driver, &pdev->dev,
+			dev_name(&pdev->dev), hcd);
+	if (!xhci->shared_hcd) {
+		ret = -ENOMEM;
+		goto disable_clk;
+	}
+
+	if (device_property_read_bool(&pdev->dev, "usb3-lpm-capable"))
+		xhci->quirks |= XHCI_LPM_SUPPORT;
 
 	/* Get possile USB 3.0 type PHY (PIPE3) available with xhci */
 	xhci->shared_hcd->phy = devm_phy_get(pdev->dev.parent, "usb3-phy");
