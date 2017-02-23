@@ -252,7 +252,7 @@ int kbase_devfreq_init(struct kbase_device *kbdev)
 		return -EFAULT;
 
 	kbdev->devfreq = devfreq_add_device(kbdev->dev, dp,
-				"simple_ondemand", NULL);
+				"performance", NULL);
 	if (IS_ERR(kbdev->devfreq)) {
 		kbase_devfreq_term_freq_table(kbdev);
 		return PTR_ERR(kbdev->devfreq);
