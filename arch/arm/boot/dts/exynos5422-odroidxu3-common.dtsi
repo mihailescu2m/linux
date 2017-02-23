@@ -71,6 +71,11 @@
 		clock-names = "fout_vpll", "dout_aclk_g3d", "clk_mali";
 		
 		gpu-supply = <&buck4_reg>;
+		operating-points = <
+			/* KHz   uV */
+			600000 1150000
+			177000  812500
+		>;
 		
 		status = "disabled";
 	};
