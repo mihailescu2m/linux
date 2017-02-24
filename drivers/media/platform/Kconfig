@@ -375,4 +375,5 @@ menuconfig DVB_PLATFORM_DRIVERS
 
 if DVB_PLATFORM_DRIVERS
 source "drivers/media/platform/sti/c8sectpfe/Kconfig"
+source "drivers/media/platform/s5p-cec/Kconfig"
 endif #DVB_PLATFORM_DRIVERS
