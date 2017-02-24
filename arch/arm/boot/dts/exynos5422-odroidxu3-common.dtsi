@@ -79,6 +79,29 @@
 		
 		status = "disabled";
 	};
+
+	cec: cec@101B0000 {
+		compatible = "samsung,exynos5-cec";
+		reg = <0x101B0000 0x1000>;
+		interrupts = <0 114 0>;
+
+		gpios = <&gpx3 6 0xf>;
+		pinctrl-names = "hdmi_cec";
+		pinctrl-0 = <&hdmi_cec>;
+
+		clock-names = "hdmicec";
+		clocks = <&clock CLK_HDMI_CEC>;
+
+		#address-cells = <1>;
+		#size-cells = <1>;
+		ranges;
+
+		status = "okay";
+
+		hdmiphy-sys {
+			reg = <0x10040700 0x4>;
+		};
+	};
 		
 	thermal-zones {
 		cpu0_thermal: cpu0-thermal {
