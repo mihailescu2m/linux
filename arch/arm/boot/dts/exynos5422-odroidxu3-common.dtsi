@@ -78,7 +78,7 @@
 		cooling-min-state = <0>;
 		cooling-max-state = <3>;
 		#cooling-cells = <2>;
-		cooling-levels = <0 150 190 252>;
+		cooling-levels = <0 110 170 230>;
 	};
 	
 	mali: mali@0x11800000 {
@@ -126,90 +126,28 @@
 		
 	thermal-zones {
 		cpu0_thermal: cpu0-thermal {
-			thermal-sensors = <&tmu_cpu0 0 &tmu_cpu1 0 &tmu_cpu2 0 &tmu_cpu3 0>;
-			polling-delay-passive = <250>;
-			polling-delay = <1000>;
-			trips {
-				cpu_alert0: cpu-alert-0 {
-					temperature = <70000>; /* millicelsius */
-					hysteresis = <10000>; /* millicelsius */
-					type = "passive";
-				};
-				cpu_alert1: cpu-alert-1 {
-					temperature = <75000>; /* millicelsius */
-					hysteresis = <10000>; /* millicelsius */
-					type = "passive";
-				};
-				cpu_alert2: cpu-alert-2 {
-					temperature = <80000>; /* millicelsius */
-					hysteresis = <10000>; /* millicelsius */
-					type = "passive";
-				};
-				cpu_alert3: cpu-alert-3 {
-					temperature = <90000>; /* millicelsius */
-					hysteresis = <10000>; /* millicelsius */
-					type = "passive";
-				};
-				cpu_alert4: cpu-alert-4 {
-					temperature = <95000>; /* millicelsius */
-					hysteresis = <10000>; /* millicelsius */
-					type = "passive";
-				};
-				cpu_alert5: cpu-alert-5 {
-					temperature = <103000>; /* millicelsius */
-					hysteresis = <10000>; /* millicelsius */
-					type = "passive";
-				};
-				cpu_alert6: cpu-alert-6 {
-					temperature = <110000>; /* millicelsius */
-					hysteresis = <10000>; /* millicelsius */
-					type = "passive";
-				};
-				cpu_criti0: cpu-crit-0 {
-					temperature = <115000>; /* millicelsius */
-					hysteresis = <10000>; /* millicelsius */
-					type = "critical";
-				};
-			};
-			cooling-maps {
-				map0 {
-					trip = <&cpu_alert0>;
-					cooling-device = <&fan0 0 1>;
-				};
-				map1 {
-					trip = <&cpu_alert1>;
-					cooling-device = <&fan0 1 2>;
-				};
-				map2 {
-					trip = <&cpu_alert2>;
-					cooling-device = <&fan0 2 3>;
-				};
-				/*
-				 * First trip for A7: 1000Mhz
-				 * First trip for A15: 1400Mhz
-				 */
-				map3 {
-					trip = <&cpu_alert3>;
-					cooling-device = <&cpu0 0 6>;
-				};
-				map4 {
-					trip = <&cpu_alert3>;
-					cooling-device = <&cpu4 0 3>;
-				};
-
-				/*
-				 * Second trip for A15: 600Mhz
-				 * Second trip for A7: 600Mhz
-				 */
-				map5 {
-					trip = <&cpu_alert4>;
-					cooling-device = <&cpu0 3 7>;
-				};
-				map6 {
-					trip = <&cpu_alert4>;
-					cooling-device = <&cpu4 3 14>;
-				};
-			};
+			thermal-sensors = <&tmu_cpu0 0>;
+			#define CPU_THERMAL_ZONE_NUM 0
+			#include "exynos5422-odroidxu3-trip-points.dtsi"
+			#undef CPU_THERMAL_ZONE_NUM
+		};
+		cpu1_thermal: cpu1-thermal {
+			thermal-sensors = <&tmu_cpu1 0>;
+			#define CPU_THERMAL_ZONE_NUM 1
+			#include "exynos5422-odroidxu3-trip-points.dtsi"
+			#undef CPU_THERMAL_ZONE_NUM
+		};
+		cpu2_thermal: cpu2-thermal {
+			thermal-sensors = <&tmu_cpu2 0>;
+			#define CPU_THERMAL_ZONE_NUM 2
+			#include "exynos5422-odroidxu3-trip-points.dtsi"
+			#undef CPU_THERMAL_ZONE_NUM
+		};
+		cpu3_thermal: cpu3-thermal {
+			thermal-sensors = <&tmu_cpu3 0>;
+			#define CPU_THERMAL_ZONE_NUM 3
+			#include "exynos5422-odroidxu3-trip-points.dtsi"
+			#undef CPU_THERMAL_ZONE_NUM
 		};
 	};
 };
