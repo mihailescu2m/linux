@@ -13,6 +13,7 @@
 */
 
 #include <dt-bindings/clock/samsung,s2mps11.h>
+#include <dt-bindings/input/input.h>
 #include <dt-bindings/interrupt-controller/irq.h>
 #include <dt-bindings/gpio/gpio.h>
 #include <dt-bindings/sound/samsung-i2s.h>
@@ -47,6 +48,22 @@
 		reg = <0x13400000 0x1000>,
 		      <0x14010000 0x1000>;
 		status = "okay";
+	};
+
+	gpio_keys {
+		compatible = "gpio-keys";
+		pinctrl-names = "default";
+		pinctrl-0 = <&gpio_power_key>;
+
+		power_key {
+			interrupt-parent = <&gpx0>;
+			interrupts = <3 0>;
+			gpios = <&gpx0 3 GPIO_ACTIVE_LOW>;
+			linux,code = <KEY_POWER>;
+			label = "power key";
+			debounce-interval = <10>;
+			wakeup-source;
+		};
 	};
 
 	emmc_pwrseq: pwrseq {
@@ -622,6 +639,11 @@
 };
 
 &pinctrl_0 {
+	gpio_power_key: power_key {
+		samsung,pins = "gpx0-3";
+		samsung,pin-pud = <EXYNOS_PIN_PULL_NONE>;
+	};
+
 	hdmi_hpd_irq: hdmi-hpd-irq {
 		samsung,pins = "gpx3-7";
 		samsung,pin-function = <EXYNOS_PIN_FUNC_INPUT>;
