@@ -31,6 +31,7 @@
 #include <linux/bug.h>
 #include <linux/compat.h>
 #include <linux/version.h>
+#include <linux/sched/mm.h>
 
 #include <mali_kbase_config.h>
 #include <mali_kbase.h>
@@ -2047,7 +2048,7 @@ static int kbase_jd_user_buf_map(struct kbase_context *kctx,
 	pinned_pages = get_user_pages_remote(NULL, mm,
 			address,
 			alloc->imported.user_buf.nr_pages,
-			reg->flags & KBASE_REG_GPU_WR, pages, NULL);
+			reg->flags & KBASE_REG_GPU_WR, pages, NULL, NULL);
 #endif
 
 	if (pinned_pages <= 0)

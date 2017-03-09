@@ -20,7 +20,7 @@
 
 #ifdef CONFIG_MALI_DMA_FENCE
 
-#include <linux/fence.h>
+#include <linux/dma-fence.h>
 #include <linux/list.h>
 #include <linux/reservation.h>
 
@@ -37,9 +37,9 @@ struct kbase_context;
  * @node:     List head for linking this callback to the katom
  */
 struct kbase_dma_fence_cb {
-	struct fence_cb fence_cb;
+	struct dma_fence_cb fence_cb;
 	struct kbase_jd_atom *katom;
-	struct fence *fence;
+	struct dma_fence *fence;
 	struct list_head node;
 };
 

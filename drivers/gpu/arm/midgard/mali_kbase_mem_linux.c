@@ -1885,8 +1885,9 @@ static void kbase_cpu_vm_close(struct vm_area_struct *vma)
 KBASE_EXPORT_TEST_API(kbase_cpu_vm_close);
 
 
-static int kbase_cpu_vm_fault(struct vm_area_struct *vma, struct vm_fault *vmf)
+static int kbase_cpu_vm_fault(struct vm_fault *vmf)
 {
+	struct vm_area_struct *vma = vmf->vma;
 	struct kbase_cpu_mapping *map = vma->vm_private_data;
 	pgoff_t rel_pgoff;
 	size_t i;
@@ -1898,7 +1899,7 @@ static int kbase_cpu_vm_fault(struct vm_area_struct *vma, struct vm_fault *vmf)
 
 	/* we don't use vmf->pgoff as it's affected by our mmap with
 	 * offset being a GPU VA or a cookie */
-	rel_pgoff = ((unsigned long)vmf->virtual_address - map->vm_start)
+	rel_pgoff = ((unsigned long)vmf->address - map->vm_start)
 			>> PAGE_SHIFT;
 
 	kbase_gpu_vm_lock(map->kctx);
