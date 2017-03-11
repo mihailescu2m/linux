@@ -79,7 +79,7 @@
 		cooling-min-state = <0>;
 		cooling-max-state = <3>;
 		#cooling-cells = <2>;
-		cooling-levels = <0 130 170 230>;
+		cooling-levels = <0 150 190 252>;
 	};
 	
 	mali: mali@0x11800000 {
@@ -127,47 +127,50 @@
 		
 	thermal-zones {
 		cpu0_thermal: cpu0-thermal {
-			thermal-sensors = <&tmu_cpu0 0>;
+			thermal-sensors = <&tmu_cpu0 0 &tmu_cpu1 0 &tmu_cpu2 0 &tmu_cpu3 0>;
 			polling-delay-passive = <250>;
-			polling-delay = <0>;
+			polling-delay = <1000>;
 			trips {
 				cpu_alert0: cpu-alert-0 {
-					temperature = <50000>; /* millicelsius */
-					hysteresis = <5000>; /* millicelsius */
-					type = "active";
+					temperature = <70000>; /* millicelsius */
+					hysteresis = <10000>; /* millicelsius */
+					type = "passive";
 				};
 				cpu_alert1: cpu-alert-1 {
-					temperature = <60000>; /* millicelsius */
-					hysteresis = <5000>; /* millicelsius */
-					type = "active";
+					temperature = <75000>; /* millicelsius */
+					hysteresis = <10000>; /* millicelsius */
+					type = "passive";
 				};
 				cpu_alert2: cpu-alert-2 {
-					temperature = <70000>; /* millicelsius */
-					hysteresis = <5000>; /* millicelsius */
-					type = "active";
+					temperature = <80000>; /* millicelsius */
+					hysteresis = <10000>; /* millicelsius */
+					type = "passive";
 				};
-				cpu_crit0: cpu-crit-0 {
-					temperature = <120000>; /* millicelsius */
-					hysteresis = <0>; /* millicelsius */
-					type = "critical";
-				};
-				/*
-				 * Exynos542x supports only 4 trip-points
-				 * so for these polling mode is required.
-				 * Start polling at temperature level of last
-				 * interrupt-driven trip: cpu_alert2
-				 */
 				cpu_alert3: cpu-alert-3 {
-					temperature = <70000>; /* millicelsius */
+					temperature = <90000>; /* millicelsius */
 					hysteresis = <10000>; /* millicelsius */
 					type = "passive";
 				};
 				cpu_alert4: cpu-alert-4 {
-					temperature = <85000>; /* millicelsius */
+					temperature = <95000>; /* millicelsius */
 					hysteresis = <10000>; /* millicelsius */
 					type = "passive";
 				};
-
+				cpu_alert5: cpu-alert-5 {
+					temperature = <103000>; /* millicelsius */
+					hysteresis = <10000>; /* millicelsius */
+					type = "passive";
+				};
+				cpu_alert6: cpu-alert-6 {
+					temperature = <110000>; /* millicelsius */
+					hysteresis = <10000>; /* millicelsius */
+					type = "passive";
+				};
+				cpu_criti0: cpu-crit-0 {
+					temperature = <115000>; /* millicelsius */
+					hysteresis = <10000>; /* millicelsius */
+					type = "critical";
+				};
 			};
 			cooling-maps {
 				map0 {
@@ -183,31 +186,29 @@
 					cooling-device = <&fan0 2 3>;
 				};
 				/*
-				 * When reaching cpu_alert3, reduce CPU
-				 * by 2 steps. On Exynos5422/5800 that would
-				 * be: 1600 MHz and 1100 MHz.
+				 * First trip for A7: 1000Mhz
+				 * First trip for A15: 1400Mhz
 				 */
 				map3 {
 					trip = <&cpu_alert3>;
-					cooling-device = <&cpu0 0 2>;
+					cooling-device = <&cpu0 0 6>;
 				};
 				map4 {
 					trip = <&cpu_alert3>;
-					cooling-device = <&cpu4 0 2>;
+					cooling-device = <&cpu4 0 3>;
 				};
 
 				/*
-				 * When reaching cpu_alert4, reduce CPU
-				 * further, down to 600 MHz (11 steps for big,
-				 * 7 steps for LITTLE).
+				 * Second trip for A15: 600Mhz
+				 * Second trip for A7: 600Mhz
 				 */
 				map5 {
 					trip = <&cpu_alert4>;
-					cooling-device = <&cpu0 3 8>;
+					cooling-device = <&cpu0 3 7>;
 				};
 				map6 {
 					trip = <&cpu_alert4>;
-					cooling-device = <&cpu4 3 13>;
+					cooling-device = <&cpu4 3 14>;
 				};
 			};
 		};
