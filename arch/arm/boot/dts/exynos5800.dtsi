@@ -35,13 +35,13 @@
 		clock-latency-ns = <140000>;
 	};
 	opp@1800000000 {
-		opp-microvolt = <1312500>;
+		opp-microvolt = <1200000>;
 	};
 	opp@1700000000 {
-		opp-microvolt = <1312500>;
+		opp-microvolt = <1162500>;
 	};
 	opp@1600000000 {
-		opp-microvolt = <1312500>;
+		opp-microvolt = <1125000>;
 	};
 	opp@1500000000 {
 		opp-microvolt = <1087500>;
@@ -53,7 +53,7 @@
 		opp-microvolt = <1050000>;
 	};
 	opp@1200000000 {
-		opp-microvolt = <1050000>;
+		opp-microvolt = <1025000>;
 	};
 	opp@1100000000 {
 		opp-microvolt = <1000000>;
