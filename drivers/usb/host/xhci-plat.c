@@ -306,14 +306,8 @@ static int xhci_plat_remove(struct platform_device *dev)
 
 	xhci->xhc_state |= XHCI_STATE_REMOVING;
 
-	phy_power_off(xhci->shared_hcd->phy);
-	phy_exit(xhci->shared_hcd->phy);
-
 	usb_remove_hcd(xhci->shared_hcd);
 	usb_phy_shutdown(hcd->usb_phy);
-
-	phy_power_off(hcd->phy);
-	phy_exit(hcd->phy);
 
 	usb_remove_hcd(hcd);
 	usb_put_hcd(xhci->shared_hcd);
