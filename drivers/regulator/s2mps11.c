@@ -1228,7 +1228,21 @@ static int s2mps11_wdt_enable(struct sec_pmic_dev *iodev)
 		0xFF, rdata))
 		pr_err("%s : S2MPS11_REG_CTRL1(w) fail!\n", __func__);
 
-        return 0;
+	return 0;
+}
+
+/* USB3.0 Hub Power OFF(GL3512) : BUCK9 */
+static void s2mps11_buck9_reset(struct sec_pmic_dev *iodev)
+{
+	if(regmap_update_bits(iodev->regmap_pmic,
+		S2MPS11_REG_B9CTRL1, 0xC0, 0))
+		pr_err("%s : S2MPS11_REG_B9CTRL1 Error!!\n", __func__);
+
+	mdelay(10);
+
+	if (regmap_update_bits(iodev->regmap_pmic,
+		S2MPS11_REG_B9CTRL1, 0xC0, 0xC0))
+		pr_err("%s : S2MPS11_REG_B9CTRL1 Error!!\n", __func__);
 }
 
 static int s2mps11_pmic_probe(struct platform_device *pdev)
@@ -1358,6 +1372,9 @@ common_reg:
 out:
 	kfree(rdata);
 
+	/* for USB 3.0 Hub(GL3512) reset */
+	s2mps11_buck9_reset(iodev);
+
 	/* for Exterenal Watchdog board enable */
 	if (external_watchdog)
 		s2mps11_pmic_watchdog_setup(iodev);
@@ -1374,6 +1391,7 @@ static void s2mps11_pmic_shutdown(struct platform_device *pdev)
 	int ret;
 
 	ret = regmap_read(iodev->regmap_pmic, S2MPS11_REG_CTRL1, &reg_val);
+
 	if (ret < 0) {
 		dev_crit(&pdev->dev, "could not read S2MPS11_REG_CTRL1 value\n");
 	} else {
