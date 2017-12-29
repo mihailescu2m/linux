@@ -19,12 +19,12 @@
 };
 
 &cluster_a15_opp_table {
-	/delete-node/opp@2000000000;
-	/delete-node/opp@1900000000;
+	/delete-node/opp-2000000000;
+	/delete-node/opp-1900000000;
 };
 
 &cluster_a7_opp_table {
-	/delete-node/opp@1400000000;
+	/delete-node/opp-1400000000;
 };
 
 &pwm {
