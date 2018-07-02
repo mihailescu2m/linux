@@ -5851,6 +5851,62 @@ static int wake_affine(struct sched_domain *sd, struct task_struct *p,
 	return target;
 }
 
+#ifdef CONFIG_HPERF_HMP
+/**
+ * hmp_select_task_rq_fair(): selects cpu for task.
+ * @p: task which needs cpu
+ *
+ * Returns cpu for task.
+ *
+ * Selects idlest cpu for task @p.
+ */
+static int
+hmp_select_task_rq_fair(struct task_struct *p)
+{
+	int cpu;
+	int new_cpu;
+	unsigned long load;
+	unsigned long scaled_load;
+
+	new_cpu = task_cpu(p);
+
+	load = ULONG_MAX;
+	/* First check primary cpus */
+	for_each_cpu_and(cpu, cpu_online_mask, cpu_fastest_mask) {
+		if (cpumask_test_cpu(cpu, tsk_cpus_allowed(p))) {
+			/* Select idle cpu if it exists */
+			if (idle_cpu(cpu))
+				return cpu;
+			/* Otherwise select the least loaded cpu */
+			scaled_load = (weighted_cpuload(cpu) *
+				       SCHED_CAPACITY_SCALE) /
+				       freq_scale_cpu_power[cpu];
+			if (scaled_load < load) {
+				new_cpu = cpu;
+				load = scaled_load;
+			}
+		}
+	}
+
+	/* Then check secondary cpus */
+	for_each_cpu_and(cpu, cpu_online_mask, cpu_slowest_mask) {
+		if (cpumask_test_cpu(cpu, tsk_cpus_allowed(p))) {
+			if (idle_cpu(cpu))
+				return cpu;
+			scaled_load = (weighted_cpuload(cpu) *
+				       SCHED_CAPACITY_SCALE) /
+				       freq_scale_cpu_power[cpu];
+			if (scaled_load < load) {
+				new_cpu = cpu;
+				load = scaled_load;
+			}
+		}
+	}
+
+	return new_cpu;
+}
+
+#else /* CONFIG_HPERF_HMP */
 static unsigned long cpu_util_without(int cpu, struct task_struct *p);
 
 static unsigned long capacity_spare_without(int cpu, struct task_struct *p)
@@ -6060,6 +6116,9 @@ find_idlest_group_cpu(struct sched_group *group, struct task_struct *p, int this
 static inline int find_idlest_cpu(struct sched_domain *sd, struct task_struct *p,
 				  int cpu, int prev_cpu, int sd_flag)
 {
+#ifdef CONFIG_HPERF_HMP
+    new_cpu = hmp_select_task_rq_fair(p);
+#else
 	int new_cpu = cpu;
 
 	if (!cpumask_intersects(sched_domain_span(sd), &p->cpus_allowed))
@@ -6106,10 +6165,12 @@ static inline int find_idlest_cpu(struct sched_domain *sd, struct task_struct *p
 				sd = tmp;
 		}
 	}
+#endif
 
 	return new_cpu;
 }
 
+#endif /* CONFIG_HPERF_HMP */
 #ifdef CONFIG_SCHED_SMT
 DEFINE_STATIC_KEY_FALSE(sched_smt_present);
 EXPORT_SYMBOL_GPL(sched_smt_present);
@@ -6737,6 +6798,11 @@ select_task_rq_fair(struct task_struct *p, int prev_cpu, int sd_flag, int wake_f
 	int want_affine = 0;
 	int sync = (wake_flags & WF_SYNC) && !(current->flags & PF_EXITING);
 
+#ifdef CONFIG_HPERF_HMP
+	if (!(sd_flag & SD_BALANCE_WAKE) || !sync)
+		return hmp_select_task_rq_fair(p);
+#endif
+
 	if (sd_flag & SD_BALANCE_WAKE) {
 		record_wakee(p);
 
@@ -6781,7 +6847,10 @@ select_task_rq_fair(struct task_struct *p, int prev_cpu, int sd_flag, int wake_f
 	} else if (sd_flag & SD_BALANCE_WAKE) { /* XXX always ? */
 		/* Fast path */
 
-		new_cpu = select_idle_sibling(p, prev_cpu, new_cpu);
+		if (IS_ENABLED(CONFIG_HPERF_HMP) && sync)
+			new_cpu = prev_cpu;
+		else
+			new_cpu = select_idle_sibling(p, prev_cpu, new_cpu);
 
 		if (want_affine)
 			current->recent_used_cpu = cpu;
