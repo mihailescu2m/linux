@@ -731,7 +731,7 @@ static bool
 is_task_hmp(struct task_struct *task, const struct cpumask *task_cpus)
 {
 	if (!task_cpus)
-		task_cpus = tsk_cpus_allowed(task);
+		task_cpus = &task->cpus_allowed;
 
 	/*
 	 * Check if a task has cpus_allowed only for one CPU domain (A15 or A7)
@@ -5998,12 +5998,12 @@ hmp_select_task_rq_fair(struct task_struct *p)
 	load = ULONG_MAX;
 	/* First check primary cpus */
 	for_each_cpu_and(cpu, cpu_online_mask, cpu_fastest_mask) {
-		if (cpumask_test_cpu(cpu, tsk_cpus_allowed(p))) {
+		if (cpumask_test_cpu(cpu, &p->cpus_allowed)) {
 			/* Select idle cpu if it exists */
 			if (idle_cpu(cpu))
 				return cpu;
 			/* Otherwise select the least loaded cpu */
-			scaled_load = (weighted_cpuload(cpu) *
+			scaled_load = (weighted_cpuload(cpu_rq(cpu)) *
 				       SCHED_CAPACITY_SCALE) /
 				       freq_scale_cpu_power[cpu];
 			if (scaled_load < load) {
@@ -6015,10 +6015,10 @@ hmp_select_task_rq_fair(struct task_struct *p)
 
 	/* Then check secondary cpus */
 	for_each_cpu_and(cpu, cpu_online_mask, cpu_slowest_mask) {
-		if (cpumask_test_cpu(cpu, tsk_cpus_allowed(p))) {
+		if (cpumask_test_cpu(cpu, &p->cpus_allowed)) {
 			if (idle_cpu(cpu))
 				return cpu;
-			scaled_load = (weighted_cpuload(cpu) *
+			scaled_load = (weighted_cpuload(cpu_rq(cpu)) *
 				       SCHED_CAPACITY_SCALE) /
 				       freq_scale_cpu_power[cpu];
 			if (scaled_load < load) {
@@ -6238,12 +6238,11 @@ find_idlest_group_cpu(struct sched_group *group, struct task_struct *p, int this
 	return shallowest_idle_cpu != -1 ? shallowest_idle_cpu : least_loaded_cpu;
 }
 
+#endif /* CONFIG_HPERF_HMP */
+
 static inline int find_idlest_cpu(struct sched_domain *sd, struct task_struct *p,
 				  int cpu, int prev_cpu, int sd_flag)
 {
-#ifdef CONFIG_HPERF_HMP
-    new_cpu = hmp_select_task_rq_fair(p);
-#else
 	int new_cpu = cpu;
 
 	if (!cpumask_intersects(sched_domain_span(sd), &p->cpus_allowed))
@@ -6256,6 +6255,9 @@ static inline int find_idlest_cpu(struct sched_domain *sd, struct task_struct *p
 	if (!(sd_flag & SD_BALANCE_FORK))
 		sync_entity_load_avg(&p->se);
 
+#ifdef CONFIG_HPERF_HMP
+    new_cpu = hmp_select_task_rq_fair(p);
+#else
 	while (sd) {
 		struct sched_group *group;
 		struct sched_domain *tmp;
@@ -6295,7 +6297,6 @@ static inline int find_idlest_cpu(struct sched_domain *sd, struct task_struct *p
 	return new_cpu;
 }
 
-#endif /* CONFIG_HPERF_HMP */
 #ifdef CONFIG_SCHED_SMT
 DEFINE_STATIC_KEY_FALSE(sched_smt_present);
 EXPORT_SYMBOL_GPL(sched_smt_present);
@@ -9408,14 +9409,14 @@ static int is_hmp_imbalance(struct sched_domain *sd)
  */
 static int hmp_can_migrate_task(struct task_struct *p, struct lb_env *env)
 {
-	if (!cpumask_test_cpu(env->dst_cpu, tsk_cpus_allowed(p))) {
-		schedstat_inc(p, se.statistics.nr_failed_migrations_affine);
+	if (!cpumask_test_cpu(env->dst_cpu, &p->cpus_allowed)) {
+		schedstat_inc(p->se.statistics.nr_failed_migrations_affine);
 		return 0;
 	}
 	env->flags &= ~LBF_ALL_PINNED;
 
 	if (task_running(env->src_rq, p)) {
-		schedstat_inc(p, se.statistics.nr_failed_migrations_running);
+		schedstat_inc(p->se.statistics.nr_failed_migrations_running);
 		return 0;
 	}
 	return 1;
@@ -9449,7 +9450,7 @@ detach_specified_task(struct task_struct *p, struct lb_env *env)
 	 * is called, so we can safely collect move_task()
 	 * stats here rather than inside move_task().
 	 */
-	schedstat_inc(env->sd, lb_gained[env->idle]);
+	schedstat_inc(env->sd->lb_gained[env->idle]);
 	return p;
 exit:
 	p->se.migrate_candidate = 0;
@@ -9499,14 +9500,14 @@ static unsigned migrate_runnable_task(struct task_struct *migrate_task,
 			.idle		= CPU_NOT_IDLE,
 		};
 
-		schedstat_inc(sd, alb_count);
+		schedstat_inc(sd->alb_count);
 		p = detach_specified_task(migrate_task, &env);
 		if (p) {
 			migrate_task->se.last_migration = jiffies;
-			schedstat_inc(sd, alb_pushed);
+			schedstat_inc(sd->alb_pushed);
 			ld_moved = migrate_task->se.load.weight;
 		} else
-			schedstat_inc(sd, alb_failed);
+			schedstat_inc(sd->alb_failed);
 	}
 	rcu_read_unlock();
 
@@ -9565,7 +9566,7 @@ static struct rq *get_unfair_rq(struct sched_domain *sd, int this_cpu)
 	if (!opposite_sg)
 		return NULL;
 
-	opposite_mask = sched_group_cpus(opposite_sg);
+	opposite_mask = sched_group_span(opposite_sg);
 	druntime = cpu_is_fastest(this_cpu) ? INT_MIN : INT_MAX;
 
 	/* Check rq's of opposite domain */
@@ -9648,7 +9649,7 @@ static struct task_struct *get_migration_candidate(struct sched_domain *sd,
 			goto next;
 
 		/* if task can't run on destination cpu, skip */
-		if (!cpumask_test_cpu(destination_cpu, tsk_cpus_allowed(p)))
+		if (!cpumask_test_cpu(destination_cpu, &p->cpus_allowed))
 			goto next;
 
 		/* check for 4ms timestamp, if idle_pull then don't care*/
@@ -9876,7 +9877,7 @@ static int get_idlest_cpu(struct sched_domain *sd, int this_cpu)
 	int cpu;
 
 	opposite_sg = get_opposite_group(sd, cpu_is_fastest(this_cpu));
-	opposite_mask = sched_group_cpus(opposite_sg);
+	opposite_mask = sched_group_span(opposite_sg);
 
 	for_each_cpu_and(cpu, opposite_mask, cpu_online_mask) {
 		if (cpu_rq(cpu)->load.weight < load) {
