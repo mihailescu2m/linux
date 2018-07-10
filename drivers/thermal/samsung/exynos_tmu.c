@@ -78,6 +78,18 @@
 #define EXYNOS_TMU_INTEN_RISE0_SHIFT	0
 #define EXYNOS_TMU_INTEN_FALL0_SHIFT	16
 
+#define EXYNOS5_TMU_INTEN_RISE0_SHIFT	0
+#define EXYNOS5_TMU_INTEN_RISE1_SHIFT	4
+#define EXYNOS5_TMU_INTEN_RISE2_SHIFT	8
+#define EXYNOS5_TMU_INTEN_FALL0_SHIFT	16
+#define EXYNOS5_TMU_INTEN_FALL1_SHIFT	20
+#define EXYNOS5_TMU_INTEN_FALL2_SHIFT	24
+
+#define EXYNOS5_TEMP_RISE3_0	0x60
+#define EXYNOS5_TEMP_RISE7_4	0x64
+#define EXYNOS5_TEMP_FALL3_0	0x68
+#define EXYNOS5_TEMP_FALL7_4	0x6c
+
 #define EXYNOS_EMUL_TIME	0x57F0
 #define EXYNOS_EMUL_TIME_MASK	0xffff
 #define EXYNOS_EMUL_TIME_SHIFT	16
@@ -457,6 +469,46 @@ static void exynos4412_tmu_initialize(struct platform_device *pdev)
 	sanitize_temp_error(data, trim_info);
 }
 
+static void exynos5420_tmu_set_trip_temp(struct exynos_tmu_data *data,
+					int trip, u8 temp)
+{
+	unsigned int reg_off, j;
+	u32 th;
+
+	if (trip > 3) {
+		reg_off = EXYNOS5_TEMP_RISE7_4;
+		j = trip - 4;
+	} else {
+		reg_off = EXYNOS5_TEMP_RISE3_0;
+		j = trip;
+	}
+
+	th = readl(data->base + reg_off);
+	th &= ~(0xff << j * 8);
+	th |= (temp_to_code(data, temp) << j * 8);
+	writel(th, data->base + reg_off);
+}
+
+static void exynos5420_tmu_set_trip_hyst(struct exynos_tmu_data *data,
+					int trip, u8 temp, u8 hyst)
+{
+	unsigned int reg_off, j;
+	u32 th;
+
+	if (trip > 3) {
+		reg_off = EXYNOS5_TEMP_FALL7_4;
+		j = trip - 4;
+	} else {
+		reg_off = EXYNOS5_TEMP_FALL3_0;
+		j = trip;
+	}
+
+	th = readl(data->base + reg_off);
+	th &= ~(0xff << j * 8);
+	th |= (temp_to_code(data, temp - hyst) << j * 8);
+	writel(th, data->base + reg_off);
+}
+
 static void exynos5433_tmu_set_trip_temp(struct exynos_tmu_data *data,
 					 int trip, u8 temp)
 {
@@ -589,6 +641,35 @@ static void exynos4210_tmu_control(struct platform_device *pdev, bool on)
 		if (data->soc != SOC_ARCH_EXYNOS4210)
 			interrupt_en |=
 				interrupt_en << EXYNOS_TMU_INTEN_FALL0_SHIFT;
+
+		con |= (1 << EXYNOS_TMU_CORE_EN_SHIFT);
+	} else {
+		con &= ~(1 << EXYNOS_TMU_CORE_EN_SHIFT);
+	}
+
+	writel(interrupt_en, data->base + EXYNOS_TMU_REG_INTEN);
+	writel(con, data->base + EXYNOS_TMU_REG_CONTROL);
+}
+
+static void exynos5420_tmu_control(struct platform_device *pdev, bool on)
+{
+	struct exynos_tmu_data *data = platform_get_drvdata(pdev);
+	struct thermal_zone_device *tz = data->tzd;
+	unsigned int con, interrupt_en = 0, i;
+
+	con = get_con_reg(data, readl(data->base + EXYNOS_TMU_REG_CONTROL));
+
+	if (on) {
+		for (i = 0; i < data->ntrip; i++) {
+			if (!of_thermal_is_trip_valid(tz, i))
+				continue;
+
+			interrupt_en |=
+				(1 << (EXYNOS5_TMU_INTEN_RISE0_SHIFT + i));
+		}
+
+		interrupt_en |=
+			interrupt_en << EXYNOS_TMU_INTEN_FALL0_SHIFT;
 
 		con |= (1 << EXYNOS_TMU_CORE_EN_SHIFT);
 	} else {
@@ -931,8 +1012,6 @@ static int exynos_map_dt_data(struct platform_device *pdev)
 	case SOC_ARCH_EXYNOS4412:
 	case SOC_ARCH_EXYNOS5250:
 	case SOC_ARCH_EXYNOS5260:
-	case SOC_ARCH_EXYNOS5420:
-	case SOC_ARCH_EXYNOS5420_TRIMINFO:
 		data->tmu_set_trip_temp = exynos4412_tmu_set_trip_temp;
 		data->tmu_set_trip_hyst = exynos4412_tmu_set_trip_hyst;
 		data->tmu_initialize = exynos4412_tmu_initialize;
@@ -950,6 +1029,22 @@ static int exynos_map_dt_data(struct platform_device *pdev)
 		else
 			data->min_efuse_value = 0;
 		data->max_efuse_value = 100;
+		break;
+	case SOC_ARCH_EXYNOS5420:
+	case SOC_ARCH_EXYNOS5420_TRIMINFO:
+		data->tmu_set_trip_temp = exynos5420_tmu_set_trip_temp;
+		data->tmu_set_trip_hyst = exynos5420_tmu_set_trip_hyst;
+		data->tmu_initialize = exynos4412_tmu_initialize;
+		data->tmu_control = exynos5420_tmu_control;
+		data->tmu_read = exynos4412_tmu_read;
+		data->tmu_set_emulation = exynos4412_tmu_set_emulation;
+		data->tmu_clear_irqs = exynos4210_tmu_clear_irqs;
+		data->ntrip = 8;
+		data->gain = 8;
+		data->reference_voltage = 16;
+		data->efuse_value = 55;
+		data->min_efuse_value = 16;
+		data->max_efuse_value = 76;
 		break;
 	case SOC_ARCH_EXYNOS5433:
 		data->tmu_set_trip_temp = exynos5433_tmu_set_trip_temp;
