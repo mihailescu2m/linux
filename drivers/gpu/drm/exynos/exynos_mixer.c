@@ -134,7 +134,7 @@ static const struct exynos_drm_plane_config plane_configs[MIXER_WIN_NR] = {
 				EXYNOS_DRM_PLANE_CAP_ZPOS,
 	}, {
 		.zpos = 1,
-		.type = DRM_PLANE_TYPE_CURSOR,
+		.type = DRM_PLANE_TYPE_OVERLAY,
 		.pixel_formats = mixer_formats,
 		.num_pixel_formats = ARRAY_SIZE(mixer_formats),
 		.capabilities = EXYNOS_DRM_PLANE_CAP_DOUBLE |
