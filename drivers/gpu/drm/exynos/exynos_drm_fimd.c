@@ -345,6 +345,14 @@ static void fimd_enable_shadow_channel_path(struct fimd_context *ctx,
 	writel(val, ctx->regs + SHADOWCON);
 }
 
+static void fimd_disable_win(struct fimd_context *ctx, int win)
+{
+	fimd_enable_video_output(ctx, win, false);
+
+	if (ctx->driver_data->has_shadowcon)
+		fimd_enable_shadow_channel_path(ctx, win, false);
+}
+
 static void fimd_clear_channels(struct exynos_drm_crtc *crtc)
 {
 	struct fimd_context *ctx = crtc->ctx;
@@ -363,12 +371,7 @@ static void fimd_clear_channels(struct exynos_drm_crtc *crtc)
 		u32 val = readl(ctx->regs + WINCON(win));
 
 		if (val & WINCONx_ENWIN) {
-			fimd_enable_video_output(ctx, win, false);
-
-			if (ctx->driver_data->has_shadowcon)
-				fimd_enable_shadow_channel_path(ctx, win,
-								false);
-
+			fimd_disable_win(ctx, win);
 			ch_enabled = 1;
 		}
 	}
@@ -880,15 +883,11 @@ static void fimd_disable_plane(struct exynos_drm_crtc *crtc,
 			       struct exynos_drm_plane *plane)
 {
 	struct fimd_context *ctx = crtc->ctx;
-	unsigned int win = plane->index;
 
 	if (ctx->suspended)
 		return;
 
-	fimd_enable_video_output(ctx, win, false);
-
-	if (ctx->driver_data->has_shadowcon)
-		fimd_enable_shadow_channel_path(ctx, win, false);
+	fimd_disable_win(ctx, plane->index);
 }
 
 static void fimd_enable(struct exynos_drm_crtc *crtc)
@@ -923,7 +922,7 @@ static void fimd_disable(struct exynos_drm_crtc *crtc)
 	 * a destroyed buffer later.
 	 */
 	for (i = 0; i < WINDOWS_NR; i++)
-		fimd_disable_plane(crtc, &ctx->planes[i]);
+		fimd_disable_win(ctx, i);
 
 	fimd_enable_vblank(crtc);
 	fimd_wait_for_vblank(crtc);
