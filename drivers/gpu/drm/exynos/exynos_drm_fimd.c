@@ -228,14 +228,6 @@ static const uint32_t fimd_formats[] = {
 	DRM_FORMAT_ARGB8888,
 };
 
-static const unsigned int capabilities[WINDOWS_NR] = {
-	0,
-	EXYNOS_DRM_PLANE_CAP_WIN_BLEND | EXYNOS_DRM_PLANE_CAP_PIX_BLEND,
-	EXYNOS_DRM_PLANE_CAP_WIN_BLEND | EXYNOS_DRM_PLANE_CAP_PIX_BLEND,
-	EXYNOS_DRM_PLANE_CAP_WIN_BLEND | EXYNOS_DRM_PLANE_CAP_PIX_BLEND,
-	EXYNOS_DRM_PLANE_CAP_WIN_BLEND | EXYNOS_DRM_PLANE_CAP_PIX_BLEND,
-};
-
 static inline void fimd_set_bits(struct fimd_context *ctx, u32 reg, u32 mask,
 				 u32 val)
 {
@@ -636,12 +628,13 @@ static void fimd_win_set_bldmod(struct fimd_context *ctx, unsigned int win,
 			BLENDCON_NEW_8BIT_ALPHA_VALUE);
 }
 
-static void fimd_win_set_pixfmt(struct fimd_context *ctx, unsigned int win,
-				struct drm_framebuffer *fb, int width)
+static void fimd_win_set_pixfmt(struct fimd_context *ctx,
+				struct exynos_drm_plane *plane)
 {
-	struct exynos_drm_plane plane = ctx->planes[win];
 	struct exynos_drm_plane_state *state =
-		to_exynos_plane_state(plane.base.state);
+		to_exynos_plane_state(plane->base.state);
+	unsigned int win = state->base.normalized_zpos;
+	struct drm_framebuffer *fb = state->base.fb;
 	uint32_t pixel_format = fb->format->format;
 	unsigned int alpha = state->base.alpha;
 	u32 val = WINCONx_ENWIN;
@@ -698,7 +691,7 @@ static void fimd_win_set_pixfmt(struct fimd_context *ctx, unsigned int win,
 	 * still better to change dma-burst than displaying garbage.
 	 */
 
-	if (width < MIN_FB_WIDTH_FOR_16WORD_BURST) {
+	if (state->src.w < MIN_FB_WIDTH_FOR_16WORD_BURST) {
 		val &= ~WINCONx_BURSTLEN_MASK;
 		val |= WINCONx_BURSTLEN_4WORD;
 	}
@@ -781,6 +774,12 @@ static void fimd_atomic_flush(struct exynos_drm_crtc *crtc)
 	if (ctx->suspended)
 		return;
 
+	for (i = hweight32(crtc->base.state->plane_mask); i < WINDOWS_NR; i++) {
+		if (!(readl(ctx->regs + WINCON(i)) & WINCONx_ENWIN))
+			break;
+		fimd_disable_win(ctx, i);
+	}
+
 	for (i = 0; i < WINDOWS_NR; i++)
 		fimd_shadow_protect_win(ctx, i, false);
 
@@ -797,7 +796,7 @@ static void fimd_update_plane(struct exynos_drm_crtc *crtc,
 	dma_addr_t dma_addr;
 	unsigned long val, size, offset;
 	unsigned int last_x, last_y, buf_offsize, line_size;
-	unsigned int win = plane->index;
+	unsigned int win = state->base.normalized_zpos;
 	unsigned int cpp = fb->format->cpp[0];
 	unsigned int pitch = fb->pitches[0];
 
@@ -864,7 +863,7 @@ static void fimd_update_plane(struct exynos_drm_crtc *crtc,
 		DRM_DEBUG_KMS("osd size = 0x%x\n", (unsigned int)val);
 	}
 
-	fimd_win_set_pixfmt(ctx, win, fb, state->src.w);
+	fimd_win_set_pixfmt(ctx, plane);
 
 	/* hardware window 0 doesn't support color key. */
 	if (win != 0)
@@ -877,17 +876,6 @@ static void fimd_update_plane(struct exynos_drm_crtc *crtc,
 
 	if (ctx->i80_if)
 		atomic_set(&ctx->win_updated, 1);
-}
-
-static void fimd_disable_plane(struct exynos_drm_crtc *crtc,
-			       struct exynos_drm_plane *plane)
-{
-	struct fimd_context *ctx = crtc->ctx;
-
-	if (ctx->suspended)
-		return;
-
-	fimd_disable_win(ctx, plane->index);
 }
 
 static void fimd_enable(struct exynos_drm_crtc *crtc)
@@ -1008,7 +996,6 @@ static const struct exynos_drm_crtc_ops fimd_crtc_ops = {
 	.disable_vblank = fimd_disable_vblank,
 	.atomic_begin = fimd_atomic_begin,
 	.update_plane = fimd_update_plane,
-	.disable_plane = fimd_disable_plane,
 	.atomic_flush = fimd_atomic_flush,
 	.atomic_check = fimd_atomic_check,
 	.te_handler = fimd_te_handler,
@@ -1062,7 +1049,10 @@ static int fimd_bind(struct device *dev, struct device *master, void *data)
 		ctx->configs[i].num_pixel_formats = ARRAY_SIZE(fimd_formats);
 		ctx->configs[i].zpos = i;
 		ctx->configs[i].type = fimd_win_types[i];
-		ctx->configs[i].capabilities = capabilities[i];
+		ctx->configs[i].capabilities = EXYNOS_DRM_PLANE_CAP_ZPOS
+					     | EXYNOS_DRM_PLANE_CAP_WIN_BLEND
+					     | EXYNOS_DRM_PLANE_CAP_PIX_BLEND;
+
 		ret = exynos_plane_init(drm_dev, &ctx->planes[i], i,
 					&ctx->configs[i]);
 		if (ret)
