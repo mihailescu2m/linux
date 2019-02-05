@@ -50,6 +50,13 @@
 #include <mali_kbase_tlstream.h>
 #include <mali_kbase_ioctl.h>
 
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 20, 0)
+int vm_insert_pfn(struct vm_area_struct *vma, unsigned long addr,
+		  unsigned long pfn)
+{
+	return vm_fault_to_errno(vmf_insert_pfn(vma, addr, pfn), 0xffff);
+}
+#endif
 
 static int kbase_vmap_phy_pages(struct kbase_context *kctx,
 		struct kbase_va_region *reg, u64 offset_bytes, size_t size,
