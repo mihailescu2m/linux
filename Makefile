@@ -1242,7 +1242,12 @@ ifneq ($(dtstree),)
 %.dtb: include/config/kernel.release scripts_dtc
 	$(Q)$(MAKE) $(build)=$(dtstree) $(dtstree)/$@
 
-PHONY += dtbs dtbs_install dt_binding_check
+%.dtbo:
+	$(Q)$(MAKE) -C $(dtstree)/overlays $@
+
+PHONY += dtbs dtbs_install dt_binding_check dtbos
+dtbos:
+	$(Q)$(MAKE) -C $(dtstree)/overlays
 dtbs dtbs_check: include/config/kernel.release scripts_dtc
 	$(Q)$(MAKE) $(build)=$(dtstree)
 
