@@ -14,7 +14,7 @@
 #include <dt-bindings/gpio/gpio.h>
 
 / {
-	model = "Hardkernel Odroid XU4";
+	model = "Hardkernel ODROID-XU4";
 	compatible = "hardkernel,odroid-xu4", "samsung,exynos5800", \
 		     "samsung,exynos5";
 
