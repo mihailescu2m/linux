@@ -230,3 +230,20 @@
 		};
 	};
 };
+
+&serial_0 {
+	status = "disabled";
+};
+
+&serial_1 {
+	status = "disabled";
+};
+
+&serial_2 {
+	// onboard 4 pin UART connector
+	status = "okay";
+};
+
+&serial_3 {
+	status = "disabled";
+};
