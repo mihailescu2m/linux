@@ -1252,6 +1252,13 @@ dtbs_check: dt_binding_check
 dtbs_install:
 	$(Q)$(MAKE) $(dtbinst)=$(dtstree)
 
+%.dtbo:
+	$(Q)$(MAKE) -C $(dtstree)/overlays $@
+
+PHONY += dtbos
+dtbos:
+	$(Q)$(MAKE) -C $(dtstree)/overlay
+
 ifdef CONFIG_OF_EARLY_FLATTREE
 all: dtbs
 endif
